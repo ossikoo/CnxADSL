@@ -1,0 +1,71 @@
+#!/bin/bash
+# Modified by Patrick Mackinlay (SpaceSurfer Ltd.)
+#  patrick@spacesurfer.com
+#
+# chkconfig: 345 09 91
+# description: This is the boot/shutdown script for the Conexant AccessRunner
+#              ADSL modem.
+
+# Source function library.
+. /etc/init.d/functions
+
+# See how we were called.
+case "$1" in
+  start)
+      # if the driver is not already loaded then
+      # Load the module
+
+      if [ ! -f /var/lock/subsys/cnxadslctl ]; then
+         echo "Starting AccessRunner"
+         modprobe CnxADSL                   \
+             CnxtDslVendorId=0x14F1         \
+             CnxtDslArmDeviceId=0x1610      \
+             CnxtDslAdslDeviceId=0x1611     \
+             CnxtDslPhysicalDriverType=1
+
+         # Initialize the firmware and start training
+         echo "Download Starting."
+         /etc/Conexant/cnxadslload /etc/Conexant
+
+         RETVAL=$?
+         if [ $RETVAL -eq 0 ] ; then
+            touch  /var/lock/subsys/cnxadslctl
+	    /usr/sbin/pppd
+	 fi
+      else
+         echo -n "AccessRunner already loaded"
+      fi
+      echo
+      ;;
+
+  stop)
+
+      PPPUP=`ps aux | grep -v grep | grep pppd`
+      if [ -n "$PPPUP" ]; then
+       echo -n "Killing pppd: "
+       killproc /usr/sbin/pppd
+       sleep 5
+       echo
+      fi
+
+      if [ -f /var/lock/subsys/cnxadslctl ]; then
+         echo -n "Stopping Conexant AccessRunner:"
+
+	 if grep -q "\[pppoatm\]" /proc/ksyms; then
+            rmmod pppoatm
+         fi
+         killall -q cnxadslload
+         rmmod CnxADSL
+         rm -f /var/lock/subsys/cnxadslctl
+      fi
+      echo
+      ;;
+  status)
+	cat /proc/net/atm/CnxAdsl:0 | more
+	;;
+  *)
+        echo "Usage: $0 {start|stop|status}"
+        exit 1
+esac
+
+exit 0

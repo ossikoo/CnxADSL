@@ -1,0 +1,2 @@
+DPCCALL BOOLEAN FPGA_ProgClk(PDATAPUMP_CONTEXT pDatapump, UINT16 clk_input);
+DPCCALL void FPGA_SetTxCtlMode(PDATAPUMP_CONTEXT pDatapump, UINT8 state);

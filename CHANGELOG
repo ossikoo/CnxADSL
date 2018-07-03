@@ -1,0 +1,236 @@
+2012-12-26 Version 2.8 for linux-3.7 -
+
+  * Adjust for modified tty termios field
+
+      In linux-3.7, tty_struct::termios was changed from (ktermios*) to
+      (ktermios). The TERMIOS macro reflects the change through a conditional
+      definition.
+
+2012-03-20 Version 2.7 for linux-2.6.27 - linux-3.6
+
+  * Reflect removal of field termios_locked from struct tty_driver in linux-3.3
+
+  * Send GPIO initialization directly
+
+      Function ARMALInitIo used to collect ARM commands before sending them.
+      This required a local array causing a stack frame of over 1kb.
+      This change removes the need for a local array,
+      thus reducing the stack frame size.
+
+  * Clean up ARMALInitIo
+
+  * Fix prototype of Auto_GetAutoSenseStatus
+
+2011-01-23 Version 2.6 for linux-2.6.27 - linux-3.2
+
+  * Move compile-time checks to LnxTools.c to ensure they are performed once only
+
+  * Disable interrupts before initializing irq tasklets
+
+  * Correct sysfs 'device' link creation and parent relationships
+
+      As of kernel version 2.6.37, atm_device_register takes an extra parameter
+      pointing to a device. This is filled with the bus device that the atm
+      device falls under. In our case, this is the dev member of the pci device
+      we're using.
+
+      This is the logical extension to the CnxADSL driver of git commit
+      d9ca676bcb26e1fdff9265a3e70f697cd381c889.
+
+  * Remove obsolete kernel version checks
+
+  * Various cleanups
+
+2010-02-07 Version 2.5 for linux-2.6.27 - linux-2.6.32
+
+  * Various code cleanups
+
+  * Kernel feature requirements:
+      - Allow compiling for kernel without PPPoATM support
+      - Allow compiling for kernel without PPP support
+      - Allow parameter passing through registers
+      - Allow SMP kernel
+
+  * GCC compatibility:
+      - Remove stray invalid PROJECTS_NAM token detected by gcc-4.4
+      - Use #warning instead of the obsolete #warn preprocessor directive
+
+2009-12-08 Version 2.4 for linux-2.6.27 - linux-2.6.32
+
+  * Use more robust style of struct initialization
+
+  * Change argument type of setsockopt from int to unsigned
+
+2009-11-05 Version 2.3 for linux-2.6.27 - linux-2.6.31
+
+  * Remove call to daemonize when starting background threads
+
+  * Reflect change of tty line discipline operations
+
+2009-10-30 Version 2.2 for linux-2.6.27 - linux-2.6.30
+
+  * Bring driver revision level up to date
+
+  * Remove disable_irq/enable_irq pair in ChipALIsrHandler
+
+2009-01-21 Version 2.1 for linux-2.6.27 - linux-2.6.29
+
+  * Reflect removal of field refcount from struct tty_driver in
+    linux-2.6.28
+
+2009-01-11 Version 2.0 for linux-2.6.27
+
+  * Remove unused define
+
+  * Sanitize cnxadslload default parameters
+
+    Location of firmware file, specified in cnxadsl.conf, can now be
+    absolute or relative.  If relative, it is relative to /usr/lib.
+
+  * Specify license
+
+  * Adjust for changes as of linux-2.6.27
+
+    Rework startup of kernel threads.
+    Rename kernel threads to fall within length limits.
+    Reflect change of tty line discipline operations.
+    Remove compatibility code for linux < 2.6.27, this driver now only
+    works for 2.6.27+. Use driver 2.6-1.* for older linux versions.
+
+  * Several older smaller changes
+
+    Clean up kernel module makefile
+    Fix char signedness problem in TIG_LOAD_RECORD struct
+    Fix atoh char pointer parameter problem
+    Fix cnxtty_write parameter problem
+    Improvement on old memory allocation fix
+
+  * Driver taken over by Vincent Zweije <zweije@xs4all.nl>
+
+23122008 Another patch from Vincent Zweije that fixes issues with the diagnostic output
+
+17082008 Changes to make 2.6.26 work
+  * Fix overflow check when incrementing counter (reprise)
+
+    Newer gcc looks through the earlier (shallow) fix for the overflow
+    problem. The new fix should really work (famous last words).
+
+  * Prevent compiler warning for uninitialized variable
+
+    Cosmetic. With all the inlining, gcc is getting too clever...
+
+  * Fix initialization of cnxtty_driver structure changed in linux-2.6.26
+
+    Tty operation function pointers were factored into a separate struct
+    tty_operations. Reflected the factorization in cnxtty_driver.
+
+  * Fix initialization of CnxAdslDebugQuery /proc entry
+
+    A field was removed from struct proc_dir_entry. Modified
+    initialization of CnxAdslProcEntry to be less sensitive to fields
+    changing.
+
+11012008 Many patches to bring the driver up to date, it should now also work on SMP systems (thanks again to Vincent Zweije for all this work!)
+	
+	Use interrupt-safe spin locking:
+	Whoops! Must use irqsave/irqrestore when compiling for SMP, even when
+	actually running on UP. I had a nice spinlock bug inside an interrupt
+	routine because of this.
+
+	Reflect move from SA_SHIRQ to IRQF_SHARED in linux-2.6.18:
+	Reflect rename of IRQ flag. Saves a lot of warnings and is better
+	future proof.
+
+	Update to reflect linux-2.6.20 termios->ktermios change:
+	At some places in the linux kernel, usage of struct termios was changed
+	to the similar struct ktermios. I don't think the change has any effect
+	on the cnxadsl module, but the compiler gives type errors, so I changed
+	the struct name where appropriate.
+
+	Check return status of pci_enable_device:
+	The return status of pci_enable_device should be checked. Doing so is
+	easy, so I implemented it.
+
+	Fix overflow check when incrementing counter:
+	Apparently, integer overflow in C is undefined, and gcc now optimises
+	x+y<x to false when y is unsigned. Counter incrementing code relied on
+	wrapping, so I've modified it to store the new value into a variable
+	before comparing.
+
+	Fix compiler problems when unsetting DBG:
+	Gcc warns on '#if DBG' when DBG is not defined. Change #if to #ifdef.	
+
+13052006 Updated the driver so that it works with kernel 2.6.16+,
+         some changes were made to the kernel API (thanks to Vincent Zweije).
+
+13072005 Some trivial fixes (thanks to Armijn Hemel for noticinga spelling mistake in an error assertion).
+         Fixed a memory allocation problem which would almost certainly have caused some instability (many thanks to Vincent Zweije for looking into and fixing this problem)
+
+11062005 Merged some fixes sent in by Andrew de Quincey (Thanks!)
+          Fix pci device enabling/disabling (15032005 patch only partially fixed the problem)
+          Remove some dead code
+          Fix kernel threads so that they daemonize correctly and hence do not stay in a Zombie state forever
+         Added code to trap kernel thread names that are too long (someone reported they were too long but this does not appear to be the case!)
+
+15032005 Fixed changes to kernel PCI API
+        pci_find_device->pci_get_device
+
+	 Patrick Mackinlay (patrick@spacesurfer.com)
+
+11062004 Applied a cleanup patch to remove all the compile time warnings
+	Thanks to Andrew Walrond for sending this to me
+
+	 Patrick Mackinlay (patrick@spacesurfer.com)
+
+05062004 Upgraded to 2.6.x version, this will no longer work with older versions of the linux kernel.
+	Forked from release 6.1.2.007-PIM-2
+	Very many changes including:
+        Converted CDSL_ADAPTER_T (CardMgmt.h) structure variables that used the task queue to:
+         DSLInterruptQueStr to a tasklet
+	 ARMInterruptQueStr to a tasklet
+	 PGBkgndQueStr to a work queue
+	 SITaskQueStr to a work queue
+	Converted kthread_t (KThread.h) structure variables that used the task queue to:
+	 tq to a work queue
+	Upgraded the module build process (Makefile)
+	Upgarded the module init, exit and params (CardMgmt.c)
+	Upgraded the ISR (ChipALIsrHandler ChipALCdsl.c)
+	Changed a lot of the locking to remove globally disabling interrupts which is no longer possible
+
+        Code to be considered alpha, it works but problems include:
+         - Kernel threads stay in zombie state when module is unloaded, but who cares because of the next problem
+         - When a ppp session is started the module will no longer unload, even if we kill the ppp session. Some 
+           ressource is not freed correctly
+         - I doubt this will work reliably on an SMP system
+         - I doubt this will work at all with two cards installed
+
+        Patrick Mackinlay (patrick@spacesurfer.com)
+
+31052004 Fixed incompatibilites with gcc 3.3.3:
+        cnxadslconfig.c had improperly terminated quoted strings
+        Patrick Mackinlay (patrick@spacesurfer.com)
+30122003 Added compatibility with linux kernel 2.4.22:
+          atmdev_op structure has free_rx_skb removed
+         Added compatibility with linux kernel 2.4.23:
+          VCC table moved to sock linked list (vcc_sklist)
+         Patrick Mackinlay (patrick@spacesurfer.com)
+05062004 Upgraded to 2.6.x version, this will no longer
+	work with older versions of the linux kernel.
+	Code to be considered alpha, it works but
+	problems include:
+	 - Kernel threads stay in zombie state when module is
+	 unloaded, but who cares because of the next problem
+	 - When a ppp session is started the module will no
+	 longer unload, even if we kill the ppp session. Some
+	 ressource is not freed correctly
+	 - I doubt this will work reliably on an SMP system
+	 - I doubt this will work at all with two cards installed
+	Patrick Mackinlay (patrick@spacesurfer.com)
+31052004 Fixed incompatibilites with gcc 3.3.3:
+	cnxadslconfig.c had improperly terminated quoted strings
+	Patrick Mackinlay (patrick@spacesurfer.com)
+30122003 Added compatibility with linux kernel 2.4.22:
+          atmdev_op structure has free_rx_skb removed
+         Added compatibility with linux kernel 2.4.23:
+          VCC table moved to sock linked list (vcc_sklist)
+         Patrick Mackinlay (patrick@spacesurfer.com)
